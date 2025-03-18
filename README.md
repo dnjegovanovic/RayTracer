@@ -1,2 +1,2 @@
-# RayTracer-
-Implementation of Ray Tracer approch
+# RayTracer
+Implementation of simple Ray Tracer approch
