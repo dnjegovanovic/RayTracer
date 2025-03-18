@@ -82,7 +82,7 @@ class Vector:
         """Detach from autograd cmoputation
 
         Returns:
-            RiggedGaussians: the detached Gaussians.
+            _vector: the detached _vector.
         """
         self._vector = self._vector.detach()
         return self
