@@ -1,6 +1,5 @@
 import torch
 from tensordict import tensorclass
-from typing import Optional
 
 
 @tensorclass

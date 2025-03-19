@@ -3,12 +3,21 @@ import numpy as np
 
 class Vector:
     """Simple vector with 3 element based on numpy"""
-
     def __init__(self, x: float = 0.0, y: float = 0.0, z: float = 0.0):
-        self.x = x
-        self.y = y
-        self.z = z
-        self.data = np.array([self.x, self.y, self.z], dtype=np.float32)
+        # Use direct assignment to avoid triggering __setattr__ during init
+        super().__setattr__('x', x)
+        super().__setattr__('y', y)
+        super().__setattr__('z', z)
+        super().__setattr__('data', np.array([x, y, z], dtype=np.float32))
+        
+    def __setattr__(self, name, value):
+        if name in ('x', 'y', 'z'):
+            # Update both the coordinate and the numpy array
+            super().__setattr__(name, value)
+            new_data = np.array([self.x, self.y, self.z], dtype=np.float32)
+            super().__setattr__('data', new_data)
+        else:
+            super().__setattr__(name, value)
 
     def __str__(self):
         return f"{self.x}, {self.y}, {self.z}"
