@@ -6,31 +6,30 @@ from .vector import Vector
 @tensorclass
 class Color(Vector):
     """RGB color representation with value clamping (0-1 range).
-    
+
     Inherits from Vector but adds:
     - RGB component aliases (r, g, b)
     - Automatic value clamping
     - Color-specific operations
-    
+
     Example:
         >>> c = Color(r=1.5, g=0.5, b=-0.2)
         >>> c.r  # 1.0 (clamped)
         >>> c.g  # 0.5
         >>> c.b  # 0.0
     """
-    
+
     def __post_init__(self):
         # First validate vector shape via parent
         super().__post_init__()
         # Then clamp values to 0-1 range
         self._vector = torch.clamp(self._vector, 0.0, 1.0)
-    
-    
+
     @classmethod
     def from_rgb(cls, r: float, g: float, b: float) -> "Color":
         """Create Color from RGB values"""
         return cls(_vector=torch.tensor([r, g, b], dtype=torch.float32))
-    
+
     @classmethod
     def from_vector(cls, vector: Vector) -> "Color":
         """Create Color from existing Vector"""
@@ -47,7 +46,7 @@ class Color(Vector):
     @property
     def b(self) -> float:
         return self.z
-    
+
     @property
     def get_color(self) -> torch.Tensor:
         return self._vector
@@ -75,3 +74,14 @@ class Color(Vector):
     def mix(self, other: "Color", ratio: float) -> "Color":
         """Linear color interpolation"""
         return Color(_vector=self._vector * ratio + other._vector * (1 - ratio))
+
+    def to(self, device):
+        self._vector = self._vector.to(device)
+        return self
+
+    @classmethod
+    def from_hex(cls, hexcolor="#000000", device="cpu"):
+        x = int(hexcolor[1:3], 16) / 255.0
+        y = int(hexcolor[3:5], 16) / 255.0
+        z = int(hexcolor[5:7], 16) / 255.0
+        return cls(torch.tensor([x, y, z])).to(device)

@@ -25,7 +25,21 @@ class Vector:
     _vector: torch.Tensor  # Tensor field for 3D vector
 
     def __post_init__(self):
-        assert self._vector.shape[-1] == 3, "Vector must have 3 elements"
+        assert self._vector.ndim >= 1, "Vector must have 3 elements"
+        if self._vector.shape[0] == 1:
+            self._vector = torch.cat([self._vector, torch.tensor([0, 0])])
+
+        if self._vector.shape[0] == 2:
+            self._vector = torch.cat([self._vector, torch.tensor([0])])
+
+    @property
+    def shape(self) -> torch.Size:
+        return self._vector.shape
+
+    @property
+    def dim(self) -> int:
+        """Get vector dimensionality (size of last dimension)"""
+        return self._vector.shape[-1]
 
     @property
     def x(self) -> float:
@@ -41,17 +55,21 @@ class Vector:
 
     @property
     def mag(self) -> torch.Tensor:
-        return torch.norm(self._vector)
+        return torch.linalg.norm(self._vector, dim=-1)
 
     @property
     def normalize(self) -> "Vector":
-        return Vector(self._vector / self.mag)
+        mag = self.mag.unsqueeze(-1)  # Add back last dim for broadcasting
+        # Handle zero magnitudes
+        mag = torch.where(mag == 0, torch.ones_like(mag), mag)
+        return Vector(self._vector / mag)
 
     def dot_product(self, other: "Vector") -> torch.Tensor:
+        assert self.dim == other.dim, "Vectors must have same dimensionality"
         return torch.dot(self._vector, other._vector)
 
     def __mul__(self, scalar) -> "Vector":
-        if isinstance(scalar, (int, float)):
+        if isinstance(scalar, (int, float, torch.Tensor)):
             return Vector(self._vector * scalar)
         else:
             raise TypeError(
@@ -62,12 +80,14 @@ class Vector:
         return self.__mul__(scalar)
 
     def __add__(self, other: "Vector") -> "Vector":
+        assert self.dim == other.dim, "Vectors must have same dimensionality"
         if isinstance(other, Vector):
             return Vector(self._vector + other._vector)
         else:
             raise TypeError(f"Unsupported operand type for +: Vector and {type(other)}")
 
     def __sub__(self, other: "Vector") -> "Vector":
+        assert self.dim == other.dim, "Vectors must have same dimensionality"
         if isinstance(other, Vector):
             return Vector(self._vector - other._vector)
         else:
