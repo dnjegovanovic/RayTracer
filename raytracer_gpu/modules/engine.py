@@ -46,7 +46,8 @@ class RenderEngine:
             return color.get_color
 
         hit_pos = ray.org + ray.dir * dist_hit
-        hit_color = self.color_at(obj_hit, hit_pos, scene)
+        hit_normal = obj_hit.normal(hit_pos)
+        hit_color = self.color_at(obj_hit, hit_pos, scene, hit_normal)
         color += hit_color
 
         return color.get_color
@@ -61,5 +62,27 @@ class RenderEngine:
                 obj_hit = obj
         return (dist_min, obj_hit)
 
-    def color_at(self, obj_hit, hit_pos, scene):
-        return obj_hit.material
+    def color_at(self, obj_hit, hit_pos, scene, hit_normal):
+        material = obj_hit.material
+        obj_color = material.color_at(hit_pos)
+        to_camera = scene.camera - hit_pos
+        specular_k = 50
+        color = material.ambient * Color.from_hex("#000000", device=self.device)
+        # Calculate for all lights in the scene
+        for light in scene.lights:
+            to_light = Ray(hit_pos, (light.positions - hit_pos))
+            # Diffusion shading (Lambert)
+            color += (
+                obj_color.get_color
+                * material.diffuse
+                * hit_normal.dot_product(to_light.dir.data)
+            )
+
+            # Specular shading (Blinn-Phone)
+            half_vec = (to_light.dir + to_camera).normalize
+            color += (
+                light.color
+                * material.specular
+                * hit_normal.dot_product(half_vec.data) ** specular_k
+            )
+        return color

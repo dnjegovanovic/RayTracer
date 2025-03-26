@@ -31,6 +31,8 @@ class RenderEngine:
                 ray = Ray(camera, dir)
                 pixels.set_pixels(i, j, self.ray_trace(ray, scene))
 
+            print("{:3.0f}%".format(float(j) / float(height) * 100), end="\r")
+
         return pixels
 
     def ray_trace(self, ray, scene):
@@ -41,7 +43,9 @@ class RenderEngine:
             return color
 
         hit_pos = ray.org + ray.dir * dist_hit
-        color += self.color_at(obj_hit, hit_pos, scene)
+        # Calc normal at hit poissition
+        hit_normal = obj_hit.normal(hit_pos)
+        color += self.color_at(obj_hit, hit_pos, scene, hit_normal)
 
         return color
 
@@ -55,5 +59,27 @@ class RenderEngine:
                 obj_hit = obj
         return (dist_min, obj_hit)
 
-    def color_at(self, obj_hit, hit_pos, scene):
-        return obj_hit.material
+    def color_at(self, obj_hit, hit_pos, scene, hit_normal):
+        material = obj_hit.material
+        obj_color = material.color_at(hit_pos)
+        to_camera = scene.camera - hit_pos
+        specular_k = 50
+        color = material.ambient * Color.from_hex("#000000")
+        # Calculate for all lights in the scene
+        for light in scene.lights:
+            to_light = Ray(hit_pos, (light.positions - hit_pos))
+            # Diffusion shading (Lambert)
+            color += (
+                obj_color
+                * material.diffuse
+                * max(hit_normal.dot_product(to_light.dir.data), 0)
+            )
+
+            # Specular shading (Blinn-Phone)
+            half_vec = (to_light.dir + to_camera).normalize
+            color += (
+                light.color
+                * material.specular
+                * max(hit_normal.dot_product(half_vec.data), 0) ** specular_k
+            )
+        return color

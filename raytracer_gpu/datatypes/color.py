@@ -75,13 +75,26 @@ class Color(Vector):
         """Linear color interpolation"""
         return Color(_vector=self._vector * ratio + other._vector * (1 - ratio))
 
+    # Fix in-place addition
+    def __iadd__(self, other) -> "Color":
+        if isinstance(other, torch.Tensor):
+            # Ensure tensor is same shape as color vector
+            if other.shape != self._vector.shape:
+                raise ValueError(
+                    f"Shape mismatch: {other.shape} vs {self._vector.shape}"
+                )
+            self._vector += other
+            self._vector = torch.clamp(self._vector, 0.0, 1.0)
+            return self
+        return super().__iadd__(other)
+
     def to(self, device):
         self._vector = self._vector.to(device)
         return self
 
     @classmethod
-    def from_hex(cls, hexcolor="#000000", device="cpu"):
-        x = int(hexcolor[1:3], 16) / 255.0
-        y = int(hexcolor[3:5], 16) / 255.0
-        z = int(hexcolor[5:7], 16) / 255.0
-        return cls(torch.tensor([x, y, z])).to(device)
+    def from_hex(cls, hex_code: str, device=None) -> "Color":
+        """Create from hex color code (#RRGGBB)"""
+        hex_code = hex_code.lstrip("#")
+        rgb = tuple(int(hex_code[i : i + 2], 16) / 255 for i in (0, 2, 4))
+        return cls(_vector=torch.tensor(rgb, device=device))

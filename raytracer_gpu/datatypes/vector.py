@@ -79,10 +79,14 @@ class Vector:
     def __rmul__(self, scalar) -> "Vector":
         return self.__mul__(scalar)
 
-    def __add__(self, other: "Vector") -> "Vector":
-        assert self.dim == other.dim, "Vectors must have same dimensionality"
+    # In Vector class
+    def __add__(self, other) -> "Vector":
         if isinstance(other, Vector):
+            assert self.dim == other.dim, "Vectors must have same dimensionality"
             return Vector(self._vector + other._vector)
+        elif isinstance(other, torch.Tensor):
+            # Handle tensor addition with broadcasting
+            return Vector(self._vector + other)
         else:
             raise TypeError(f"Unsupported operand type for +: Vector and {type(other)}")
 

@@ -36,3 +36,12 @@ class Sphere:
             if dist > 0:
                 return dist
         return None
+
+    def normal(self, surface_point):
+        """Return the normal to the point on the sphere surface
+
+        Args:
+            surface_point (_type_): _description_
+        """
+
+        return (surface_point - self.center).normalize
