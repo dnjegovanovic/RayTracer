@@ -1,20 +1,35 @@
-from raytracer.datatypes.color import Color
-from raytracer.datatypes.vector import Vector
-from raytracer.datatypes.point import Point
-from raytracer.datatypes.sphere import Sphere
+import argparse
+import importlib
+from multiprocessing import cpu_count
+
 from raytracer.modules.scene import Scene
 from raytracer.modules.engine import RenderEngine
-from raytracer.datatypes.light import PointLight
-from raytracer.datatypes.material import Material
 
 import importlib
 import time
 
+
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("scene",default="examples.twoballs", help="Path to scene file (without .py extension)")
+    parser.add_argument(
+        "-p",
+        "--processes",
+        action="store",
+        type=int,
+        dest="processes",
+        default=0,
+        help="Number of processes (0=auto)",
+    )
+    args = parser.parse_args()
+    if args.processes == 0:
+        process_count = cpu_count()
+    else:
+        process_count = args.processes
+    
     start_time = time.perf_counter()
 
-    scene_path = "examples.twoballs"
-    mod = importlib.import_module(scene_path)
+    mod = importlib.import_module(args.scene)
 
     scene = Scene(mod.CAMERA, mod.OBJECTS, mod.LIGHTS, mod.WIDTH, mod.HEIGHT)
     engien = RenderEngine()
