@@ -7,22 +7,23 @@ from raytracer.modules.engine import RenderEngine
 from raytracer.datatypes.light import PointLight
 from raytracer.datatypes.material import Material
 
+import importlib
+import time
 
 def main():
-    WIDTH = 320
-    HEIGHT = 200
+    start_time = time.perf_counter()
 
-    camera = Vector(0.0, 0.0, -1.0)
-    obj = [Sphere(Point(0, 0, 0), 0.5, Material(Color.from_hex("#FF0000")))]
-    lights = [PointLight(Point(1.5, -0.5, -10), Color.from_hex("#FFFFFF"))]
+    scene_path = "examples.twoballs"
+    mod = importlib.import_module(scene_path)
 
-    scene = Scene(camera, obj, lights, WIDTH, HEIGHT)
+    scene = Scene(mod.CAMERA, mod.OBJECTS, mod.LIGHTS, mod.WIDTH, mod.HEIGHT)
     engien = RenderEngine()
     image = engien.render(scene)
 
-    with open("./output/test_shading.ppm", "w") as image_file:
+    with open(f"./output/{mod.RENDERING_IMG}", "w") as image_file:
         image.write_ppm(image_file)
 
+    print(f"Total runtime: {time.perf_counter() - start_time:.2f} seconds")
 
 if __name__ == "__main__":
     main()
