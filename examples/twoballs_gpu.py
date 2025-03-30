@@ -28,11 +28,25 @@ OBJECTS = [
         ),
     ),
     # Blue ball
-    Sphere(Point(torch.tensor([0.75, -0.1, 1.0])).to(device), 0.6, Material(Color.from_hex("#0000FF", device).to(device))),
-    Sphere(Point(torch.tensor([-0.75, -0.1, 2.25])).to(device), 0.6, Material(Color.from_hex("#803980", device).to(device))),
+    Sphere(
+        Point(torch.tensor([0.75, -0.1, 1.0])).to(device),
+        0.6,
+        Material(Color.from_hex("#0000FF", device).to(device)),
+    ),
+    Sphere(
+        Point(torch.tensor([-0.75, -0.1, 2.25])).to(device),
+        0.6,
+        Material(Color.from_hex("#803980", device).to(device)),
+    ),
 ]
 
 LIGHTS = [
-    PointLight(Point(torch.tensor([1.5, -0.5, -10])).to(device), Color.from_hex("#FFFFFF", device).to(device)),
-    PointLight(Point(torch.tensor([-0.5, -10.5, 0])).to(device), Color.from_hex("#E6E6E6", device).to(device)),
+    PointLight(
+        Point(torch.tensor([1.5, -0.5, -10])).to(device),
+        Color.from_hex("#FFFFFF", device).to(device),
+    ),
+    PointLight(
+        Point(torch.tensor([-0.5, -10.5, 0])).to(device),
+        Color.from_hex("#E6E6E6", device).to(device),
+    ),
 ]

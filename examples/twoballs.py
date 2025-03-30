@@ -5,10 +5,10 @@ from raytracer.datatypes.sphere import Sphere
 from raytracer.datatypes.light import PointLight
 from raytracer.datatypes.material import Material, ChequerMaterial
 
-WIDTH = 960
-HEIGHT = 540
+WIDTH = 1280
+HEIGHT = 1080
 
-RENDERING_IMG = "2balls_cpu_refl_res2.ppm"
+RENDERING_IMG = "hd_res.ppm"
 
 CAMERA = Vector(0.0, -0.35, -1.0)
 

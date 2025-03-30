@@ -1,3 +1,8 @@
+from multiprocessing import Process, Value
+from pathlib import Path
+import shutil
+import tempfile
+
 from .scene import Scene
 from raytracer.datatypes.image import Image
 from raytracer.datatypes.ray import Ray
@@ -10,6 +15,7 @@ class RenderEngine:
 
     MAX_DEPTH = 5
     MIN_DISPLACE = 0.0001  # delta in formula
+    PROGRESS_UPDATE_INTERVAL = 0.5  # seconds
 
     def render(self, scene: Scene):
         width = scene.width
@@ -52,7 +58,9 @@ class RenderEngine:
 
         if depth < self.MAX_DEPTH:
             new_ray_pos = hit_pos + hit_normal * self.MIN_DISPLACE
-            new_ray_dir = ray.dir - 2 * ray.dir.dot_product(hit_normal.data) * hit_normal
+            new_ray_dir = (
+                ray.dir - 2 * ray.dir.dot_product(hit_normal.data) * hit_normal
+            )
             new_ray = Ray(new_ray_pos, new_ray_dir)
             # Attanuated the reflacted ray by the reflection coeff
             color += (
@@ -96,3 +104,40 @@ class RenderEngine:
                 * max(hit_normal.dot_product(half_vec.data), 0) ** specular_k
             )
         return color
+
+    def render_multiprocess(self, scene, process_count, image_file):
+        def split_range(count, parts):
+            d, r = divmod(count, parts)
+            return [
+                (i * d + min(i, r), (i + 1) * d + min(i + 1, r)) for i in range(parts)
+            ]
+
+        width = scene.width
+        height = scene.height
+        ranges = split_range(height, process_count)
+        temp_dir = Path(tempfile.mkdtemp())
+        temp_file_tmpl = "puray-part-{}.temp"
+        processes = []
+        try:
+            rows_done = Value("i", 0)
+            for hmin, hmax in ranges:
+                part_file = temp_dir / temp_file_tmpl.format(hmin)
+                processes.append(
+                    Process(
+                        target=self.render,
+                        args=(scene, hmin, hmax, part_file, rows_done),
+                    )
+                )
+            # Start all the processes
+            for process in processes:
+                process.start()
+            # Wait for all the processes to finish
+            for process in processes:
+                process.join()
+            # Construct the image by joining all the parts
+            Image.write_ppm_header(image_file, height=height, width=width)
+            for hmin, _ in ranges:
+                part_file = temp_dir / temp_file_tmpl.format(hmin)
+                image_file.write(open(part_file, "r").read())
+        finally:
+            shutil.rmtree(temp_dir)
